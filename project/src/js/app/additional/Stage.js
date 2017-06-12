@@ -1,8 +1,9 @@
-define(['PIXI', 'additional/EventManager', 'additional/SpinButton'], function (PIXI, eventManager, SpinButton) {
+define(['PIXI', 'additional/EventManager', 'additional/SpinButton', 'additional/ReelsContainer'], function (PIXI, eventManager, SpinButton, ReelsContainer) {
 
     var Stage = function ()
     {
         this.scene = {};
+        this.reels = {};
 
         this.init();
     };
@@ -24,6 +25,8 @@ define(['PIXI', 'additional/EventManager', 'additional/SpinButton'], function (P
             setupHandlers: function ()
             {
                 this.configLoadedHandler = this.configLoaded.bind(this);
+                this.spinButtonDownHandler = this.spinButtonDown.bind(this);
+                this.reelsStoppedHandler = this.reelsStopped.bind(this);
 
                 return this;
             },
@@ -35,6 +38,8 @@ define(['PIXI', 'additional/EventManager', 'additional/SpinButton'], function (P
             subscribeHandlers: function ()
             {
                 eventManager.subscribe('config_loaded', this.configLoadedHandler);
+                eventManager.subscribe('spin_button_down', this.spinButtonDownHandler);
+                eventManager.subscribe('reels_stopped', this.reelsStoppedHandler);
 
                 return this;
             },
@@ -58,21 +63,23 @@ define(['PIXI', 'additional/EventManager', 'additional/SpinButton'], function (P
                 document.body.appendChild(this.scene.view);
 
                 var background = this.createBackground(config.background);
-                this.scene.stage.addChild(background);
 
                 var foreground = this.createForeground(config.foreground);
-                this.scene.stage.addChild(foreground);
 
                 var slotAreaMask = this.createSlotAreaMask(config.mask);
-                this.scene.stage.addChild(slotAreaMask);
-
-                background.mask = slotAreaMask;
 
                 var spinButton = new SpinButton(config.spinButton);
+
+                this.reels = new ReelsContainer(config.reels);
+
+                this.scene.stage.addChild(background);
+                this.scene.stage.addChild(slotAreaMask);
+                this.scene.stage.addChild(this.reels.getInstance());
+                this.scene.stage.addChild(foreground);
                 this.scene.stage.addChild(spinButton);
 
-                // var reels = [];
-
+                background.mask = slotAreaMask;
+                this.reels.getInstance().mask = slotAreaMask;
             },
 
             /**
@@ -122,7 +129,40 @@ define(['PIXI', 'additional/EventManager', 'additional/SpinButton'], function (P
                 slotAreaMask.y = config.position.y;
 
                 return slotAreaMask;
+            },
+
+            /**
+             * Spin button was clicked
+             */
+            spinButtonDown: function ()
+            {
+                this.scene.ticker.add(this.spin, this);
+            },
+
+            /**
+             * Handler of reels stop event
+             */
+            reelsStopped: function ()
+            {
+                this.endSpin();
+            },
+
+            /**
+             * Remove update from ticker
+             */
+            endSpin: function ()
+            {
+                this.scene.ticker.remove(this.spin, this);
+            },
+
+            /**
+             *
+             */
+            spin: function ()
+            {
+                this.reels.update();
             }
+
         };
 
     return Stage;

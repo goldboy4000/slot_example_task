@@ -1,4 +1,4 @@
-define(['additional/ConfigLoader', 'additional/Stage'], function (ConfigLoader, Stage)
+define(['additional/ConfigLoader', 'additional/Stage', 'additional/SoundManager'], function (ConfigLoader, Stage, SoundManager)
 {
     return {
 
@@ -9,6 +9,7 @@ define(['additional/ConfigLoader', 'additional/Stage'], function (ConfigLoader, 
         {
             var configLoader = new ConfigLoader('config.json');
             var stage = new Stage();
+            var soundManager = new SoundManager();
 
             configLoader.load();
         }
